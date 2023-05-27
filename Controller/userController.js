@@ -2,7 +2,6 @@ const userModel = require("../Model/userModel");
 const bcrypt = require("bcrypt");
 const validator = require("validator");
 const jwt = require("jsonwebtoken");
-const slant = require("figlet/importable-fonts/Slant");
 
 const createToken = (_id) => {
   const jwtkey = process.env.JWT_SECRET_KEY;
@@ -52,3 +51,49 @@ const registerUser = async (req, res) => {
     res.status(500).json(error);
   }
 };
+
+/**
+ * LOGIN_USER
+ * @param req
+ * @param res
+ * @returns {Promise<*>}
+ */
+const loginUser = async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    let user = await userModel.findOne({ email }); // schema 에서 email 객체를 찾는다.
+
+    if (!user) return res.status(400).json("이메일을 입력 하세요"); // user(email) 객체가 없으면 400 코드를 반환
+
+    const isValidPassword = await bcrypt.compare(password, user.password); // 요청한 password 와 user password 를 비교 검증한다.
+
+    if (!isValidPassword)
+      return res.status(400).json("이메일 또는 패스워드가 틀립니다.");
+  } catch (error) {
+    console.log(error);
+    res.status(500).join(error);
+  }
+};
+
+/**
+ * FIND_USER
+ * @param req
+ * @param res
+ * req : /users/<id>
+ * @returns {Promise<void>}
+ */
+const findUser = async (req, res) => {
+  const userId = req.param.userId;
+
+  try {
+    const user = await userModel.findById(userId);
+
+    res.status(200).json(user);
+  } catch (error) {
+    console.log(error);
+    res.status(500).join(error);
+  }
+};
+
+module.exports = { registerUser, loginUser, findUser };
